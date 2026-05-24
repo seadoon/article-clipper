@@ -54,7 +54,7 @@ def notify_discord(title: str, url: str, author: str) -> None:
     if not webhook:
         return
     try:
-        requests.post(webhook, json={"content": f"📎 **{author}** の新着記事\n**{title}**\n{url}"}, timeout=10)
+        requests.post(webhook, json={"content": f"📎 **{author}** の新着記事\n[{title}]({url})"}, timeout=10)
     except Exception as e:
         logger.warning(f"discord notify failed: {e}")
 
