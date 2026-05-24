@@ -2,7 +2,7 @@ name: Note Clipper
 
 on:
   schedule:
-    - cron: "0 */6 * * *"   # 6時間ごと（UTC）
+    - cron: "*/10 * * * *"   # 10分ごと（UTC）
   workflow_dispatch:          # GitHub 画面から手動実行も可能
 
 jobs:
