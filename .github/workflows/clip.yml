@@ -1,0 +1,44 @@
+name: Note Clipper
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"   # 6時間ごと（UTC）
+  workflow_dispatch:          # GitHub 画面から手動実行も可能
+
+jobs:
+  clip:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # clipped.json をコミットするために必要
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ hashFiles('requirements.txt') }}
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run clipper
+        env:
+          NOTE_COOKIES: ${{ secrets.NOTE_COOKIES }}
+          GOOGLE_TOKEN: ${{ secrets.GOOGLE_TOKEN }}
+        working-directory: src
+        run: python clipper.py
+
+      - name: Commit updated clipped.json
+        run: |
+          git config user.email "github-actions@github.com"
+          git config user.name "GitHub Actions"
+          git add clipped.json
+          # 変更がなければ何もしない
+          git diff --staged --quiet || git commit -m "chore: update clipped state [skip ci]"
+          git push
