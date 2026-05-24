@@ -8,6 +8,7 @@ import logging
 import sys
 import time
 from pathlib import Path
+from urllib.parse import urlparse
 
 from config import NOTE_AUTHORS
 from converter import make_frontmatter, safe_filename
@@ -24,9 +25,17 @@ logger = logging.getLogger(__name__)
 CLIPPED_JSON = Path(__file__).parent.parent / "clipped.json"
 
 
+def normalize_url(url: str) -> str:
+    """クエリパラメータ・フラグメントを除いたクリーンな URL を返す"""
+    p = urlparse(url)
+    return p._replace(query="", fragment="").geturl()
+
+
 def load_clipped() -> dict:
     if CLIPPED_JSON.exists():
-        return json.loads(CLIPPED_JSON.read_text(encoding="utf-8"))
+        data = json.loads(CLIPPED_JSON.read_text(encoding="utf-8"))
+        data["note"] = [normalize_url(u) for u in data["note"]]
+        return data
     return {"note": []}
 
 
@@ -45,7 +54,7 @@ def clip_note(drive, folder_ids: dict, clipped: dict) -> int:
         rss_items = fetch_rss(username)
 
         for item in rss_items:
-            url = item["url"]
+            url = normalize_url(item["url"])
             if url in clipped["note"]:
                 continue
 
