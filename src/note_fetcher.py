@@ -122,9 +122,9 @@ def fetch_article(url: str, cookies: dict) :
     content_text = content_div.get_text(strip=True)
 
     # ----- ペイウォール判定 -----
-    # ペイウォール要素があり、かつ本文がほぼない場合はスキップ
+    # ペイウォール要素があればスキップ（購入済み記事には paywall 要素が出ない）
     has_paywall_el = any(soup.find(attrs=sel) for sel in PAYWALL_SELECTORS)
-    if has_paywall_el and len(content_text) < 300:
+    if has_paywall_el:
         logger.info(f"paywalled (not purchased): {title}")
         return {"paywalled": True, "title": title, "url": url}
 
