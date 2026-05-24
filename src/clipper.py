@@ -49,12 +49,13 @@ def save_clipped(clipped: dict) -> None:
     )
 
 
-def notify_discord(title: str, url: str, author: str) -> None:
+def notify_discord(title: str, note_url: str, drive_id: str, author: str) -> None:
     webhook = os.environ.get("DISCORD_WEBHOOK")
     if not webhook:
         return
+    drive_url = f"https://drive.google.com/file/d/{drive_id}/view"
     try:
-        requests.post(webhook, json={"content": f"📎 **{author}** の新着記事\n**{title}**\n{url}"}, timeout=10)
+        requests.post(webhook, json={"content": f"📎 **{author}** の新着記事\n**{title}**\n{note_url}\n{drive_url}"}, timeout=10)
     except Exception as e:
         logger.warning(f"discord notify failed: {e}")
 
@@ -100,11 +101,11 @@ def clip_note(drive, folder_ids: dict, clipped: dict) -> int:
             ) + article["content_md"]
 
             fname = safe_filename(article["title"], article["author_display"])
-            uploaded = upload_markdown(drive, md, fname, folder_id)
+            file_id = upload_markdown(drive, md, fname, folder_id)
             clipped["note"].append(url)
-            if uploaded:
+            if file_id:
                 count += 1
-                notify_discord(article["title"], url, cfg["display_name"])
+                notify_discord(article["title"], url, file_id, cfg["display_name"])
 
     return count
 

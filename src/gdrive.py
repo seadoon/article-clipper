@@ -47,17 +47,17 @@ def upload_markdown(service, content: str, filename: str, folder_id: str) -> boo
     )
     if existing:
         logger.debug(f"already exists, skip: {filename}")
-        return False
+        return None
 
     media = MediaInMemoryUpload(
         content.encode("utf-8"),
         mimetype="text/markdown",
         resumable=False,
     )
-    service.files().create(
+    result = service.files().create(
         body={"name": filename, "parents": [folder_id]},
         media_body=media,
         fields="id",
     ).execute()
     logger.info(f"uploaded: {filename}")
-    return True
+    return result["id"]
