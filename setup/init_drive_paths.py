@@ -14,7 +14,7 @@ from pathlib import Path
 # src/ 内の config.py を import できるようにパスを通す
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from config import MAILMAG_AUTHORS, NOTE_AUTHORS
+from config import NOTE_AUTHORS
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 
@@ -59,8 +59,6 @@ def collect_all_paths() -> set[str]:
         for key in ("drive_path", "drive_path_membership", "drive_path_article"):
             if key in cfg:
                 paths.add(cfg[key])
-    for cfg in MAILMAG_AUTHORS.values():
-        paths.add(cfg["drive_path"])
     return paths
 
 
