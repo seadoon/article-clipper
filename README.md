@@ -1,6 +1,6 @@
-# note-clipper
+# article-clipper
 
-note.com の購読記事を自動取得し、Google Drive（Obsidian vault）に保存する GitHub Actions ワークフロー。
+購読記事を自動取得し、Google Drive（Obsidian vault）に保存する GitHub Actions ワークフロー。
 
 ## アーキテクチャ
 
@@ -10,9 +10,9 @@ flowchart TD
 
     CRON --> CLIPPER["clipper.py"]
 
-    CLIPPER -->|RSS ポーリング| NOTE["note.com RSS"]
-    NOTE -->|新着記事 URL| CLIPPER
-    CLIPPER -->|記事取得\n+ ペイウォール判定| NOTE
+    CLIPPER -->|RSS ポーリング| RSS["RSS フィード"]
+    RSS -->|新着記事 URL| CLIPPER
+    CLIPPER -->|記事取得\n+ ペイウォール判定| RSS
 
     CLIPPER -->|Markdown アップロード| DRIVE["Google Drive\n（Obsidian vault）"]
     CLIPPER -->|タスク追加| TASKS["Google Tasks\n購読記事リスト"]
@@ -23,7 +23,7 @@ flowchart TD
 
 ## 概要
 
-- note.com の RSS を10分ごとにポーリング
+- RSS を10分ごとにポーリング
 - 未保存の新着記事を Markdown に変換して Google Drive にアップロード
 - ペイウォール（未購入）記事はスキップ
 - 新規保存時に Discord へ通知 + Google Tasks にタスク追加
@@ -32,15 +32,14 @@ flowchart TD
 
 Settings → Secrets and variables → Actions に以下を登録する。
 
-### `NOTE_COOKIES`
+### `PLATFORM_COOKIES`
 
-note.com のログイン Cookie（JSON形式）。Firefox の `cookies.sqlite` から `setup/extract_cookies.py` で抽出する。
+ログイン Cookie（JSON形式）。Firefox の `cookies.sqlite` から `setup/extract_cookies.py` で抽出する。
 
 ```json
 {
-  "apay-session-set": "...",
-  "note_gw": "...",
-  "_note_session_v5": "..."
+  "session_key": "...",
+  "session_secret": "..."
 }
 ```
 
@@ -77,13 +76,29 @@ Google Drive のフォルダパス → フォルダID のマッピング（JSON�
 
 ```json
 {
-  "obsidian_sync/Investment/raw/ABC Trader/記事": "<folder_id>",
-  "obsidian_sync/Investment/raw/そーなんだ化学": "<folder_id>",
-  "obsidian_sync/Investment/raw/パウロ": "<folder_id>"
+  "obsidian_sync/Investment/raw/著者A": "<folder_id>",
+  "obsidian_sync/Investment/raw/著者B": "<folder_id>"
 }
 ```
 
 著者を追加・変更した場合は `setup/init_drive_paths.py` を再実行してシークレットを更新する。
+
+---
+
+### `NOTE_AUTHORS`
+
+著者ごとの設定（JSON形式）。`config/authors.json` と同じ形式。
+
+```json
+{
+  "username": {
+    "display_name": "表示名",
+    "obsidian_link": "[[表示名]]",
+    "drive_path": "obsidian_sync/Investment/raw/表示名",
+    "rss_url": "https://example.com/username/rss"
+  }
+}
+```
 
 ---
 
@@ -114,7 +129,7 @@ https://discord.com/api/webhooks/...
 
 ## セットアップ手順
 
-1. `setup/extract_cookies.py` — Firefox から note.com Cookie を抽出 → `NOTE_COOKIES` に登録
+1. `setup/extract_cookies.py` — Firefox からログイン Cookie を抽出 → `PLATFORM_COOKIES` に登録
 2. `setup/init_auth.py` — Google OAuth 認証（Drive + Tasks スコープ）→ `GOOGLE_TOKEN` に登録
 3. `setup/init_drive_paths.py` — Drive フォルダ ID を取得 → `FOLDER_IDS` に登録
 4. Google Tasks で「購読記事」リストを作成し ID を取得 → `TASKS_LIST_ID` に登録
@@ -124,11 +139,11 @@ https://discord.com/api/webhooks/...
 ## ファイル構成
 
 ```
-note-clipper/
+article-clipper/
 ├── src/
 │   ├── clipper.py       # メインエントリーポイント
 │   ├── config.py        # 著者設定
-│   ├── note_fetcher.py  # RSS取得・記事スクレイピング
+│   ├── fetcher.py       # RSS取得・記事スクレイピング
 │   ├── gdrive.py        # Google Drive アップロード
 │   └── converter.py     # Markdown変換・ファイル名生成
 ├── setup/

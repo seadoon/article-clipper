@@ -3,6 +3,7 @@ config/authors.json
 setup/google_token.json
 setup/client_secret.json
 note_cookies.json
+cookies.json
 .DS_Store
 __pycache__/
 *.pyc

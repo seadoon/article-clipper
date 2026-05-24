@@ -1,5 +1,5 @@
 """
-Step 4: 既存の Obsidian ファイルをスキャンして clipped.json を初期化する。
+既存の Obsidian ファイルをスキャンして clipped.json を初期化する。
 
 既にクリップ済みの記事を重複して保存しないようにするための初回セットアップ。
 
@@ -29,7 +29,7 @@ def extract_source_url(md_file: Path) :
     return None
 
 
-def scan_note_urls(vault_path: Path) :
+def scan_article_urls(vault_path: Path) :
     raw_dir = vault_path / "raw"
     if not raw_dir.exists():
         print(f"  ❌ raw/ が見つかりません: {raw_dir}")
@@ -38,7 +38,7 @@ def scan_note_urls(vault_path: Path) :
     urls = []
     for md_file in raw_dir.rglob("*.md"):
         url = extract_source_url(md_file)
-        if url and "note.com" in url:
+        if url:
             urls.append(url)
             print(f"  {url}")
 
@@ -57,12 +57,12 @@ def main() -> None:
 
     print(f"vault: {vault_path}\n")
     print("=" * 50)
-    print("raw/ 以下の note.com URL をスキャン中...")
+    print("raw/ 以下の URL をスキャン中...")
     print("=" * 50)
 
-    note_urls = scan_note_urls(vault_path)
+    article_urls = scan_article_urls(vault_path)
 
-    clipped = {"note": sorted(set(note_urls))}
+    clipped = {"note": sorted(set(article_urls))}
     clipped_json.write_text(
         json.dumps(clipped, indent=2, ensure_ascii=False), encoding="utf-8"
     )

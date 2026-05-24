@@ -21,7 +21,7 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 
 from gdrive import get_drive_service, load_folder_ids, upload_markdown
-from note_fetcher import fetch_article, fetch_rss, load_cookies
+from fetcher import fetch_article, fetch_rss, load_cookies
 
 logging.basicConfig(
     level=logging.INFO,
@@ -92,8 +92,9 @@ def clip_note(drive, tasks, folder_ids: dict, clipped: dict) -> int:
     count = 0
 
     for username, cfg in NOTE_AUTHORS.items():
+        rss_url = cfg.get("rss_url", "")
         logger.info(f"[note] checking RSS: {username}")
-        rss_items = fetch_rss(username)
+        rss_items = fetch_rss(rss_url)
 
         for item in rss_items:
             url = normalize_url(item["url"])

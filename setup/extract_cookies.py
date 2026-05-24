@@ -1,12 +1,13 @@
 """
-Step 1: note.com の Firefox セッション Cookie を抽出する。
+Step 1: Firefox のセッション Cookie を抽出する。
 
 使い方:
-  1. Firefox で note.com にログインした状態で Firefox を終了する
-  2. python setup/extract_cookies.py を実行
-  3. 出力された JSON 文字列を GitHub Secrets の NOTE_COOKIES に貼り付ける
+  1. Firefox でログインした状態で Firefox を終了する
+  2. python setup/extract_cookies.py --domain <対象ドメイン> を実行
+  3. 出力された JSON 文字列を GitHub Secrets の PLATFORM_COOKIES に貼り付ける
 """
 
+import argparse
 import json
 import shutil
 import sqlite3
@@ -25,11 +26,10 @@ def find_firefox_profile() -> Path:
             "Firefox プロファイルが見つかりません。"
             f"確認先: {profiles_root}"
         )
-    # 最終更新日時が最も新しいものを選ぶ
     return max(candidates, key=lambda p: p.stat().st_mtime)
 
 
-def extract_cookies(domain: str = "note.com") -> dict:
+def extract_cookies(domain: str) -> dict:
     profile = find_firefox_profile()
     print(f"プロファイル: {profile}")
 
@@ -37,7 +37,6 @@ def extract_cookies(domain: str = "note.com") -> dict:
     if not cookies_db.exists():
         raise FileNotFoundError(f"cookies.sqlite が見つかりません: {cookies_db}")
 
-    # Firefox が書き込み中の可能性があるため一時コピーを使う
     with tempfile.NamedTemporaryFile(suffix=".sqlite", delete=False) as tmp:
         tmp_path = Path(tmp.name)
     try:
@@ -57,17 +56,21 @@ def extract_cookies(domain: str = "note.com") -> dict:
 
 
 def main() -> None:
-    print("note.com の Cookie を Firefox から抽出します...")
+    parser = argparse.ArgumentParser(description="Firefox から Cookie を抽出する")
+    parser.add_argument("--domain", required=True, help="対象ドメイン（例: example.com）")
+    args = parser.parse_args()
+
+    print(f"Cookie を Firefox から抽出します（ドメイン: {args.domain}）...")
     print("※ Firefox はあらかじめ終了しておいてください\n")
 
     try:
-        cookies = extract_cookies()
+        cookies = extract_cookies(args.domain)
     except FileNotFoundError as e:
         print(f"❌ {e}")
         return
 
     if not cookies:
-        print("❌ note.com の Cookie が見つかりません。Firefox で note.com にログインしてから再試行してください。")
+        print(f"❌ {args.domain} の Cookie が見つかりません。Firefox でログインしてから再試行してください。")
         return
 
     print(f"✅ {len(cookies)} 件の Cookie を取得しました\n")
@@ -75,13 +78,12 @@ def main() -> None:
     cookies_json = json.dumps(cookies)
 
     print("=" * 60)
-    print("以下を GitHub Secrets の NOTE_COOKIES にコピーしてください:")
+    print("以下を GitHub Secrets の PLATFORM_COOKIES にコピーしてください:")
     print("=" * 60)
     print(cookies_json)
     print("=" * 60)
 
-    # ローカル確認用に保存（GitHub に push しないこと）
-    out = Path("note_cookies.json")
+    out = Path("cookies.json")
     out.write_text(json.dumps(cookies, indent=2, ensure_ascii=False))
     print(f"\nローカル確認用: {out.resolve()} （GitHub には push しないこと）")
 

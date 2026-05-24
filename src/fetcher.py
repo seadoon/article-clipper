@@ -20,10 +20,9 @@ HEADERS = {
     ),
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     "Accept-Language": "ja,en-US;q=0.9,en;q=0.8",
-    "Referer": "https://note.com/",
+    "Referer": "https://www.google.com/",
 }
 
-# note.com のコンテンツ div を見つけるためのセレクタ（優先順）
 CONTENT_SELECTORS = [
     {"class": re.compile(r"textnote[_-]body", re.I)},
     {"class": re.compile(r"note[_-]body", re.I)},
@@ -31,7 +30,6 @@ CONTENT_SELECTORS = [
     {"class": re.compile(r"article[_-]body", re.I)},
 ]
 
-# ペイウォール存在のインジケータ
 PAYWALL_SELECTORS = [
     {"class": re.compile(r"purchase", re.I)},
     {"class": re.compile(r"paywall", re.I)},
@@ -41,30 +39,22 @@ PAYWALL_SELECTORS = [
 
 
 def load_cookies() -> dict:
-    raw = os.environ.get("NOTE_COOKIES", "{}")
+    raw = os.environ.get("PLATFORM_COOKIES", os.environ.get("NOTE_COOKIES", "{}"))
     return json.loads(raw)
 
 
-def fetch_rss(username: str) :
-    """RSS から新着記事のメタデータ一覧を取得する"""
-    url = f"https://note.com/{username}/rss"
-    feed = feedparser.parse(url)
+def fetch_rss(rss_url: str):
+    feed = feedparser.parse(rss_url)
     return [
         {
             "url": entry.link,
             "title": entry.title,
-            "username": username,
         }
         for entry in feed.entries
     ]
 
 
-def fetch_article(url: str, cookies: dict) :
-    """
-    1記事を取得して辞書で返す。
-    ペイウォール（未購入）は {"paywalled": True, "title": ..., "url": ...}
-    取得失敗は None
-    """
+def fetch_article(url: str, cookies: dict):
     session = requests.Session()
     session.cookies.update(cookies)
 
@@ -77,7 +67,6 @@ def fetch_article(url: str, cookies: dict) :
 
     soup = BeautifulSoup(resp.text, "lxml")
 
-    # ----- メタデータ -----
     og_title = soup.find("meta", property="og:title")
     title = og_title["content"] if og_title else (
         soup.find("h1").get_text(strip=True) if soup.find("h1") else "Untitled"
@@ -100,7 +89,6 @@ def fetch_article(url: str, cookies: dict) :
     author_meta = soup.find("meta", {"name": "author"})
     author_display = author_meta["content"] if author_meta else ""
 
-    # ----- コンテンツ抽出 -----
     content_div = None
     for selector in CONTENT_SELECTORS:
         content_div = soup.find("div", selector)
@@ -115,9 +103,6 @@ def fetch_article(url: str, cookies: dict) :
 
     content_text = content_div.get_text(strip=True)
 
-    # ----- ペイウォール判定 -----
-    # paywall 要素が存在し、かつ display:none でない場合のみ未購入と判定
-    # （購入済み記事は paywall 要素が display:none で残る場合がある）
     def is_visible_paywall(sel):
         el = soup.find(attrs=sel)
         if el is None:
@@ -127,10 +112,9 @@ def fetch_article(url: str, cookies: dict) :
 
     has_paywall_el = any(is_visible_paywall(sel) for sel in PAYWALL_SELECTORS)
     if has_paywall_el:
-        logger.info(f"paywalled (not purchased): {title}")
+        logger.info(f"paywalled: {title}")
         return {"paywalled": True, "title": title, "url": url}
 
-    # ----- HTML → Markdown -----
     h2t = html2text.HTML2Text()
     h2t.ignore_links = False
     h2t.body_width = 0
