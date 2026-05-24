@@ -122,8 +122,16 @@ def fetch_article(url: str, cookies: dict) :
     content_text = content_div.get_text(strip=True)
 
     # ----- ペイウォール判定 -----
-    # ペイウォール要素があればスキップ（購入済み記事には paywall 要素が出ない）
-    has_paywall_el = any(soup.find(attrs=sel) for sel in PAYWALL_SELECTORS)
+    # paywall 要素が存在し、かつ display:none でない場合のみ未購入と判定
+    # （購入済み記事は paywall 要素が display:none で残る場合がある）
+    def is_visible_paywall(sel):
+        el = soup.find(attrs=sel)
+        if el is None:
+            return False
+        style = el.get("style", "")
+        return "display:none" not in style.replace(" ", "")
+
+    has_paywall_el = any(is_visible_paywall(sel) for sel in PAYWALL_SELECTORS)
     if has_paywall_el:
         logger.info(f"paywalled (not purchased): {title}")
         return {"paywalled": True, "title": title, "url": url}
