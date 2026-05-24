@@ -100,12 +100,6 @@ def fetch_article(url: str, cookies: dict) :
     author_meta = soup.find("meta", {"name": "author"})
     author_display = author_meta["content"] if author_meta else ""
 
-    # ----- メンバーシップ判定 -----
-    is_membership = bool(
-        soup.find(attrs={"class": re.compile(r"membership", re.I)})
-        or soup.find(attrs={"data-note-type": "membership"})
-    )
-
     # ----- コンテンツ抽出 -----
     content_div = None
     for selector in CONTENT_SELECTORS:
@@ -149,6 +143,5 @@ def fetch_article(url: str, cookies: dict) :
         "url": url,
         "published": published,
         "author_display": author_display,
-        "is_membership": is_membership,
         "content_md": content_md,
     }

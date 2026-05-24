@@ -7,8 +7,7 @@ NOTE_AUTHORS = {
     "paul1211": {
         "display_name": "パウロ",
         "obsidian_link": "[[パウロ]]",
-        "drive_path_membership": "obsidian_sync/Investment/raw/パウロ/メンバーシップ",
-        "drive_path_article":    "obsidian_sync/Investment/raw/パウロ/記事",
+        "drive_path": "obsidian_sync/Investment/raw/パウロ",
     },
     "so_nandachem": {
         "display_name": "そーなんだ化学",

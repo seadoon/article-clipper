@@ -71,15 +71,7 @@ def clip_note(drive, folder_ids: dict, clipped: dict) -> int:
                 clipped["note"].append(url)
                 continue
 
-            # パウロだけメンバーシップ / 記事で振り分け
-            if username == "paul1211":
-                drive_path = (
-                    cfg["drive_path_membership"]
-                    if article["is_membership"]
-                    else cfg["drive_path_article"]
-                )
-            else:
-                drive_path = cfg["drive_path"]
+            drive_path = cfg["drive_path"]
 
             folder_id = folder_ids.get(drive_path)
             if not folder_id:
