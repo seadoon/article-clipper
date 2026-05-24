@@ -16,6 +16,10 @@ import requests
 
 from config import NOTE_AUTHORS
 from converter import make_frontmatter, safe_filename
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
+from googleapiclient.discovery import build
+
 from gdrive import get_drive_service, load_folder_ids, upload_markdown
 from note_fetcher import fetch_article, fetch_rss, load_cookies
 
@@ -60,7 +64,30 @@ def notify_discord(title: str, note_url: str, drive_id: str, author: str) -> Non
         logger.warning(f"discord notify failed: {e}")
 
 
-def clip_note(drive, folder_ids: dict, clipped: dict) -> int:
+def get_tasks_service():
+    creds = Credentials.from_authorized_user_info(
+        json.loads(os.environ["GOOGLE_TOKEN"])
+    )
+    if creds.expired and creds.refresh_token:
+        creds.refresh(Request())
+    return build("tasks", "v1", credentials=creds)
+
+
+def add_task(tasks, title: str, note_url: str) -> None:
+    list_id = os.environ.get("TASKS_LIST_ID")
+    if not list_id:
+        return
+    try:
+        tasks.tasks().insert(
+            tasklist=list_id,
+            body={"title": title, "notes": note_url},
+        ).execute()
+        logger.info(f"task added: {title}")
+    except Exception as e:
+        logger.warning(f"tasks add failed: {e}")
+
+
+def clip_note(drive, tasks, folder_ids: dict, clipped: dict) -> int:
     cookies = load_cookies()
     count = 0
 
@@ -106,6 +133,7 @@ def clip_note(drive, folder_ids: dict, clipped: dict) -> int:
             if file_id:
                 count += 1
                 notify_discord(article["title"], url, file_id, cfg["display_name"])
+                add_task(tasks, article["title"], url)
 
     return count
 
@@ -116,8 +144,9 @@ def main() -> None:
     clipped = load_clipped()
     folder_ids = load_folder_ids()
     drive = get_drive_service()
+    tasks = get_tasks_service()
 
-    note_count = clip_note(drive, folder_ids, clipped)
+    note_count = clip_note(drive, tasks, folder_ids, clipped)
 
     save_clipped(clipped)
     logger.info(f"=== done: {note_count} articles clipped ===")

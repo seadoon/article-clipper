@@ -9,6 +9,7 @@ Step 2: Google Drive 認証。
 
 必要なスコープ:
   - drive  (Obsidian vault への書き込み)
+  - tasks  (Google Tasks へのタスク追加)
 """
 
 import json
@@ -18,6 +19,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 
 SCOPES = [
     "https://www.googleapis.com/auth/drive",
+    "https://www.googleapis.com/auth/tasks",
 ]
 
 
