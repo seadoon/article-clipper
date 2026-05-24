@@ -2,12 +2,31 @@
 
 note.com の購読記事を自動取得し、Google Drive（Obsidian vault）に保存する GitHub Actions ワークフロー。
 
+## アーキテクチャ
+
+```mermaid
+flowchart TD
+    CRON["⏱ GitHub Actions\n10分ごと / 手動実行"]
+
+    CRON --> CLIPPER["clipper.py"]
+
+    CLIPPER -->|RSS ポーリング| NOTE["note.com RSS"]
+    NOTE -->|新着記事 URL| CLIPPER
+    CLIPPER -->|記事取得\n+ ペイウォール判定| NOTE
+
+    CLIPPER -->|Markdown アップロード| DRIVE["Google Drive\n（Obsidian vault）"]
+    CLIPPER -->|タスク追加| TASKS["Google Tasks\n購読記事リスト"]
+    CLIPPER -->|新着通知| DISCORD["Discord"]
+    CLIPPER -->|処理済み URL 記録| JSON["clipped.json\n（重複防止）"]
+    JSON -->|コミット| REPO["GitHub リポジトリ"]
+```
+
 ## 概要
 
 - note.com の RSS を10分ごとにポーリング
 - 未保存の新着記事を Markdown に変換して Google Drive にアップロード
 - ペイウォール（未購入）記事はスキップ
-- 新規保存時に Discord へ通知
+- 新規保存時に Discord へ通知 + Google Tasks にタスク追加
 
 ## GitHub Secrets
 
@@ -31,7 +50,7 @@ Cookie の有効期限が切れたら再取得が必要。
 
 ### `GOOGLE_TOKEN`
 
-Google Drive API の OAuth2 トークン（JSON形式）。`setup/init_auth.py` を実行すると `setup/google_token.json` が生成されるので、その中身をそのまま貼る。
+Google Drive API / Google Tasks API の OAuth2 トークン（JSON形式）。`setup/init_auth.py` を実行すると `setup/google_token.json` が生成されるので、その中身をそのまま貼る。
 
 ```json
 {
@@ -40,7 +59,10 @@ Google Drive API の OAuth2 トークン（JSON形式）。`setup/init_auth.py` 
   "token_uri": "https://oauth2.googleapis.com/token",
   "client_id": "...",
   "client_secret": "...",
-  "scopes": ["https://www.googleapis.com/auth/drive"],
+  "scopes": [
+    "https://www.googleapis.com/auth/drive",
+    "https://www.googleapis.com/auth/tasks"
+  ],
   "expiry": "..."
 }
 ```
@@ -65,6 +87,23 @@ Google Drive のフォルダパス → フォルダID のマッピング（JSON�
 
 ---
 
+### `TASKS_LIST_ID`
+
+Google Tasks のタスクリスト ID。以下のスクリプトでリスト一覧を確認できる。
+
+```python
+from google.oauth2.credentials import Credentials
+from googleapiclient.discovery import build
+import json
+
+creds = Credentials.from_authorized_user_info(json.loads(open("setup/google_token.json").read()))
+service = build("tasks", "v1", credentials=creds)
+for tl in service.tasklists().list().execute().get("items", []):
+    print(tl["title"], tl["id"])
+```
+
+---
+
 ### `DISCORD_WEBHOOK`
 
 Discord の Incoming Webhook URL。通知を送りたいチャンネルの設定から取得する。
@@ -76,10 +115,11 @@ https://discord.com/api/webhooks/...
 ## セットアップ手順
 
 1. `setup/extract_cookies.py` — Firefox から note.com Cookie を抽出 → `NOTE_COOKIES` に登録
-2. `setup/init_auth.py` — Google OAuth 認証 → `GOOGLE_TOKEN` に登録
+2. `setup/init_auth.py` — Google OAuth 認証（Drive + Tasks スコープ）→ `GOOGLE_TOKEN` に登録
 3. `setup/init_drive_paths.py` — Drive フォルダ ID を取得 → `FOLDER_IDS` に登録
-4. `setup/init_clipped.py` — 既存 vault をスキャンして重複防止リストを初期化
-5. GitHub Actions で Run workflow を実行して動作確認
+4. Google Tasks で「購読記事」リストを作成し ID を取得 → `TASKS_LIST_ID` に登録
+5. `setup/init_clipped.py` — 既存 vault をスキャンして重複防止リストを初期化
+6. GitHub Actions で Run workflow を実行して動作確認
 
 ## ファイル構成
 
