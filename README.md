@@ -9,14 +9,6 @@ note.com の購読記事を自動取得し、Google Drive（Obsidian vault）に
 - ペイウォール（未購入）記事はスキップ
 - 新規保存時に Discord へ通知
 
-## 対象著者
-
-| note ID | 表示名 | 保存先 |
-|---------|--------|--------|
-| abctrader | ABC Trader | `raw/ABC Trader/記事/` |
-| paul1211 | パウロ | `raw/パウロ/` |
-| so_nandachem | そーなんだ化学 | `raw/そーなんだ化学/` |
-
 ## GitHub Secrets
 
 Settings → Secrets and variables → Actions に以下を登録する。
