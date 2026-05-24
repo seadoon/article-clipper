@@ -25,9 +25,13 @@ def get_drive_service():
 def load_folder_ids() -> dict:
     global _FOLDER_IDS
     if _FOLDER_IDS is None:
-        ids_path = Path(__file__).parent.parent / "config" / "folder_ids.json"
-        with open(ids_path, encoding="utf-8") as f:
-            _FOLDER_IDS = json.load(f)
+        env_val = os.environ.get("FOLDER_IDS")
+        if env_val:
+            _FOLDER_IDS = json.loads(env_val)
+        else:
+            ids_path = Path(__file__).parent.parent / "config" / "folder_ids.json"
+            with open(ids_path, encoding="utf-8") as f:
+                _FOLDER_IDS = json.load(f)
     return _FOLDER_IDS
 
 

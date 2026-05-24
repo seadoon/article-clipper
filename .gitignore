@@ -1,0 +1,7 @@
+config/folder_ids.json
+setup/google_token.json
+setup/client_secret.json
+note_cookies.json
+.DS_Store
+__pycache__/
+*.pyc
