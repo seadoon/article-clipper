@@ -14,9 +14,4 @@ NOTE_AUTHORS = {
         "obsidian_link": "[[そーなんだ化学]]",
         "drive_path": "obsidian_sync/Investment/raw/そーなんだ化学",
     },
-    "later0906": {
-        "display_name": "ダイ",
-        "obsidian_link": "[[ダイ]]",
-        "drive_path": "obsidian_sync/Investment/raw/ダイ",
-    },
 }
