@@ -9,10 +9,9 @@ import sys
 import time
 from pathlib import Path
 
-from config import MAILMAG_AUTHORS, NOTE_AUTHORS
+from config import NOTE_AUTHORS
 from converter import make_frontmatter, safe_filename
 from gdrive import get_drive_service, load_folder_ids, upload_markdown
-from gmail_fetcher import fetch_new_emails, get_gmail_service
 from note_fetcher import fetch_article, fetch_rss, load_cookies
 
 logging.basicConfig(
@@ -28,7 +27,7 @@ CLIPPED_JSON = Path(__file__).parent.parent / "clipped.json"
 def load_clipped() -> dict:
     if CLIPPED_JSON.exists():
         return json.loads(CLIPPED_JSON.read_text(encoding="utf-8"))
-    return {"note": [], "gmail": []}
+    return {"note": []}
 
 
 def save_clipped(clipped: dict) -> None:
@@ -36,10 +35,6 @@ def save_clipped(clipped: dict) -> None:
         json.dumps(clipped, indent=2, ensure_ascii=False), encoding="utf-8"
     )
 
-
-# ──────────────────────────────────────────
-# note.com
-# ──────────────────────────────────────────
 
 def clip_note(drive, folder_ids: dict, clipped: dict) -> int:
     cookies = load_cookies()
@@ -56,7 +51,7 @@ def clip_note(drive, folder_ids: dict, clipped: dict) -> int:
 
             logger.info(f"[note] fetching: {url}")
             article = fetch_article(url, cookies)
-            time.sleep(1.5)  # サーバー負荷を下げる
+            time.sleep(1.5)
 
             if article is None:
                 logger.warning(f"[note] fetch failed: {url}")
@@ -64,7 +59,6 @@ def clip_note(drive, folder_ids: dict, clipped: dict) -> int:
 
             if article["paywalled"]:
                 logger.info(f"[note] skip (not purchased): {article['title']}")
-                # ペイウォールでも URL は記録しておく（毎回試行を防ぐ）
                 clipped["note"].append(url)
                 continue
 
@@ -99,49 +93,6 @@ def clip_note(drive, folder_ids: dict, clipped: dict) -> int:
     return count
 
 
-# ──────────────────────────────────────────
-# メルマガ (Gmail)
-# ──────────────────────────────────────────
-
-def clip_mailmag(drive, folder_ids: dict, clipped: dict) -> int:
-    gmail = get_gmail_service()
-    count = 0
-
-    for key, cfg in MAILMAG_AUTHORS.items():
-        logger.info(f"[mail] checking: {cfg['display_name']}")
-        emails = fetch_new_emails(
-            gmail,
-            already_processed=clipped["gmail"],
-            mag2_id=cfg["mag2_id"],
-            gmail_query=cfg["gmail_query"],
-        )
-
-        folder_id = folder_ids.get(cfg["drive_path"])
-        if not folder_id:
-            logger.error(f"[mail] folder_id not found for: {cfg['drive_path']}")
-            continue
-
-        for article in emails:
-            md = make_frontmatter(
-                title=article["title"],
-                source_url=f"https://www.mag2.com/m/{cfg['mag2_id']}",
-                obsidian_link=cfg["obsidian_link"],
-                published_date=article["published"],
-            ) + article["content_md"]
-
-            fname = safe_filename(article["title"], cfg["display_name"])
-            uploaded = upload_markdown(drive, md, fname, folder_id)
-            clipped["gmail"].append(article["msg_id"])
-            if uploaded:
-                count += 1
-
-    return count
-
-
-# ──────────────────────────────────────────
-# メイン
-# ──────────────────────────────────────────
-
 def main() -> None:
     logger.info("=== note-clipper start ===")
 
@@ -150,10 +101,9 @@ def main() -> None:
     drive = get_drive_service()
 
     note_count = clip_note(drive, folder_ids, clipped)
-    mail_count = clip_mailmag(drive, folder_ids, clipped)
 
     save_clipped(clipped)
-    logger.info(f"=== done: note={note_count} mail={mail_count} ===")
+    logger.info(f"=== done: {note_count} articles clipped ===")
 
 
 if __name__ == "__main__":

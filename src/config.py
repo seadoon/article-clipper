@@ -21,14 +21,3 @@ NOTE_AUTHORS = {
         "drive_path": "obsidian_sync/Investment/raw/ダイ",
     },
 }
-
-MAILMAG_AUTHORS = {
-    "life_is_beautiful": {
-        "display_name": "Life is Beautiful",
-        "obsidian_link": "[[Life is Beautiful]]",
-        "drive_path": "obsidian_sync/Investment/raw/Life is Beautiful",
-        "mag2_id": "0001323030",
-        # まぐまぐからのメール検索クエリ（必要なら絞り込む）
-        "gmail_query": "from:mag2.com",
-    },
-}
