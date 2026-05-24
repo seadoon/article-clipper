@@ -1,4 +1,5 @@
 config/folder_ids.json
+config/authors.json
 setup/google_token.json
 setup/client_secret.json
 note_cookies.json

@@ -34,6 +34,7 @@ jobs:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
           FOLDER_IDS: ${{ secrets.FOLDER_IDS }}
           TASKS_LIST_ID: ${{ secrets.TASKS_LIST_ID }}
+          NOTE_AUTHORS: ${{ secrets.NOTE_AUTHORS }}
         working-directory: src
         run: python clipper.py
 
