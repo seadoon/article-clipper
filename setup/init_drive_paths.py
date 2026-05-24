@@ -19,7 +19,7 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 
 
-def find_folder(service, name: str, parent_id: str) -> str | None:
+def find_folder(service, name: str, parent_id: str):
     """parent_id の直下から name のフォルダを探して ID を返す。なければ None"""
     q = (
         f"name='{name}' "

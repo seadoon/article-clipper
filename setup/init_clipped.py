@@ -17,7 +17,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 
-def extract_source_url(md_file: Path) -> str | None:
+def extract_source_url(md_file: Path) :
     """frontmatter の source: フィールドから URL を取り出す"""
     try:
         text = md_file.read_text(encoding="utf-8")
@@ -29,7 +29,7 @@ def extract_source_url(md_file: Path) -> str | None:
     return None
 
 
-def scan_note_urls(vault_path: Path) -> list[str]:
+def scan_note_urls(vault_path: Path) :
     raw_dir = vault_path / "raw"
     if not raw_dir.exists():
         print(f"  ❌ raw/ が見つかりません: {raw_dir}")

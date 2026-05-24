@@ -45,7 +45,7 @@ def load_cookies() -> dict:
     return json.loads(raw)
 
 
-def fetch_rss(username: str) -> list[dict]:
+def fetch_rss(username: str) :
     """RSS から新着記事のメタデータ一覧を取得する"""
     url = f"https://note.com/{username}/rss"
     feed = feedparser.parse(url)
@@ -59,7 +59,7 @@ def fetch_rss(username: str) -> list[dict]:
     ]
 
 
-def fetch_article(url: str, cookies: dict) -> dict | None:
+def fetch_article(url: str, cookies: dict) :
     """
     1記事を取得して辞書で返す。
     ペイウォール（未購入）は {"paywalled": True, "title": ..., "url": ...}

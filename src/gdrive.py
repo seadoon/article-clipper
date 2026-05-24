@@ -10,7 +10,7 @@ from googleapiclient.http import MediaInMemoryUpload
 
 logger = logging.getLogger(__name__)
 
-_FOLDER_IDS: dict | None = None
+_FOLDER_IDS = None
 
 
 def get_drive_service():
