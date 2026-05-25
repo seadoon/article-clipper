@@ -2,7 +2,7 @@ name: Article Clipper
 
 on:
   schedule:
-    - cron: "0 * * * *"   # 毎時0分（UTC）
+    - cron: "0 * * * *"   # 毎時0分（UTC）= JST 毎時9分
   workflow_dispatch:          # GitHub 画面から手動実行も可能
 
 jobs:
