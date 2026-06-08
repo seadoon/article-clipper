@@ -128,7 +128,7 @@ def clip_note(drive, tasks, folder_ids: dict, clipped: dict) -> int:
                 published_date=article["published"],
             ) + article["content_md"]
 
-            fname = safe_filename(article["title"], article["author_display"])
+            fname = safe_filename(article["published"] + "_" + article["title"], article["author_display"])
             file_id = upload_markdown(drive, md, fname, folder_id)
             clipped["note"].append(url)
             if file_id:
